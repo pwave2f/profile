@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ProfileVerse — Gerador de Perfis Fictícios</title>
+  <meta name="description" content="Gere, cadastre, edite e exclua perfis fictícios com Random User API e Firebase Firestore." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@600;700&display=swap" />
+  <link rel="stylesheet" href="profile.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar__inner">
+      <a href="#" class="logo"><span class="logo__icon">👥</span><span>Profile<b class="grad">Verse</b></span></a>
+      <nav class="nav" aria-label="Principal"><a href="#painel">Painel</a><a href="#perfis">Perfis</a></nav>
+      <div class="actions">
+        <button class="btn btn--outline" id="btnNew">＋ <span class="hide-sm">Cadastrar perfil</span></button>
+        <button class="btn btn--primary" id="btnGen">✦ <span class="hide-sm">Gerar perfis</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container main">
+    <section id="painel" class="rise">
+      <h1>Gerenciador de <span class="grad">Perfis Fictícios</span></h1>
+      <p class="muted lead">Gere pessoas fictícias pela Random User API, revise antes de salvar e gerencie tudo no Firebase Firestore em tempo real.</p>
+      <div class="stats">
+        <div class="card stat"><span class="stat__icon">👥</span><div><strong id="stTotal">—</strong><small>Perfis cadastrados</small></div></div>
+        <div class="card stat"><span class="stat__icon">👁</span><div><strong id="stShown">—</strong><small>Perfis exibidos</small></div></div>
+        <div class="card stat"><span class="stat__icon">✚</span><div><strong id="stRecent">—</strong><small>Adicionados nas últimas 24h</small></div></div>
+      </div>
+    </section>
+
+    <section id="perfis">
+      <div class="card filters">
+        <input id="fSearch" class="input" type="search" placeholder="🔍 Buscar por nome, sobrenome ou e-mail" aria-label="Pesquisar perfis" />
+        <select id="fCountry" class="input" aria-label="País"><option value="all">Todos os países</option></select>
+        <select id="fGender" class="input" aria-label="Gênero"><option value="all">Todos os gêneros</option><option value="female">Feminino</option><option value="male">Masculino</option><option value="other">Outro</option></select>
+        <select id="fSource" class="input" aria-label="Origem"><option value="all">Todas origens</option><option value="api">API</option><option value="manual">Manual</option></select>
+        <select id="fSort" class="input" aria-label="Ordenar"><option value="recent">Mais recentes</option><option value="oldest">Mais antigos</option><option value="name">Nome (A–Z)</option></select>
+        <button class="btn btn--ghost" id="btnClear" hidden>✕ Limpar filtros</button>
+      </div>
+      <div id="listState" class="state"><div class="spinner"></div>Conectando ao Firestore…</div>
+      <div id="grid" class="grid"></div>
+      <div class="center"><button class="btn btn--outline" id="btnMore" hidden>Carregar mais</button></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <b>ProfileVerse</b>
+      <span>Dados fictícios da <a href="https://randomuser.me" target="_blank" rel="noreferrer">Random User Generator API</a> · HTML, CSS, JavaScript e Firebase Firestore</span>
+    </div>
+  </footer>
+
+  <!-- Painel gerador -->
+  <div class="overlay" id="genOverlay" hidden>
+    <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="genTitle">
+      <div class="drawer__head">
+        <div class="row between"><h2 id="genTitle">✦ Gerar perfis</h2><button class="icon-btn" data-close aria-label="Fechar">✕</button></div>
+        <p class="muted">Os perfis gerados só são salvos depois que você confirmar.</p>
+        <div class="row">
+          <select id="genCount" class="input" aria-label="Quantidade">
+            <option>1</option><option>3</option><option selected>6</option><option>10</option><option>20</option><option>50</option>
+          </select>
+          <button class="btn btn--primary" id="btnDoGen">Gerar</button>
+        </div>
+      </div>
+      <div class="drawer__body" id="genList"><p class="muted center pad">Escolha a quantidade e clique em “Gerar”.</p></div>
+      <div class="drawer__foot" id="genFoot" hidden>
+        <span class="muted" id="genSel">0 selecionado(s)</span>
+        <button class="btn btn--primary" id="btnSaveSel">Cadastrar selecionados</button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Formulário -->
+  <div class="overlay overlay--center" id="formOverlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="formTitle">
+      <div class="row between"><h2 id="formTitle">Cadastrar perfil</h2><button class="icon-btn" data-close aria-label="Fechar">✕</button></div>
+      <p class="muted">Use apenas dados fictícios. Campos com * são obrigatórios.</p>
+      <form id="profileForm" class="form" novalidate>
+        <label>Nome *<input class="input" name="firstName" /><small class="err"></small></label>
+        <label>Sobrenome *<input class="input" name="lastName" /><small class="err"></small></label>
+        <label class="span2">URL da fotografia<input class="input" name="photoURL" placeholder="https://..." /><small class="err"></small></label>
+        <label class="span2">E-mail fictício *<input class="input" name="email" type="email" /><small class="err"></small></label>
+        <label>Idade *<input class="input" name="age" type="number" min="1" max="120" /><small class="err"></small></label>
+        <label>Gênero *<select class="input" name="gender"><option value="female">Feminino</option><option value="male">Masculino</option><option value="other">Outro</option></select><small class="err"></small></label>
+        <label>Cidade *<input class="input" name="city" /><small class="err"></small></label>
+        <label>Estado / região<input class="input" name="state" /><small class="err"></small></label>
+        <label>País *<input class="input" name="country" /><small class="err"></small></label>
+        <label>Telefone<input class="input" name="phone" /><small class="err"></small></label>
+        <div class="span2 row end">
+          <button type="button" class="btn btn--outline" data-close>Cancelar</button>
+          <button type="submit" class="btn btn--primary" id="btnSubmit">Salvar perfil</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Detalhes -->
+  <div class="overlay overlay--center" id="detailOverlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="detName">
+      <div class="row end"><button class="icon-btn" data-close aria-label="Fechar">✕</button></div>
+      <div class="center"><img id="detPhoto" class="avatar avatar--xl" alt="" /><h2 id="detName"></h2><p class="muted">Perfil fictício</p></div>
+      <dl class="details" id="detList"></dl>
+      <div class="row end"><button class="btn btn--outline" id="detEdit">✎ Editar</button><button class="btn btn--danger" id="detDelete">🗑 Excluir</button></div>
+    </div>
+  </div>
+
+  <!-- Confirmar exclusão -->
+  <div class="overlay overlay--center" id="delOverlay" hidden>
+    <div class="modal modal--sm" role="alertdialog" aria-modal="true" aria-labelledby="delTitle">
+      <h2 id="delTitle"></h2>
+      <p class="muted">Esta ação removerá o registro permanentemente do banco de dados Firestore.</p>
+      <div class="row end"><button class="btn btn--outline" data-close>Cancelar</button><button class="btn btn--danger" id="btnConfirmDel">Excluir</button></div>
+    </div>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <script type="module" src="profile.js"></script>
+</body>
+</html>
